@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Anillo de Fuego con Rastro</title>
+<style>
+  body {
+    margin:0;
+    background:black;
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+  }
+  canvas { display:block; }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const cx = canvas.width / 2;
+const cy = canvas.height / 2;
+
+const spacing = 5;
+const layerGap = 2;
+let angleOffset = 0;
+
+// Capas normales
+let radii = [51, 53];
+for (let i = 0; i < 7; i++) {
+  radii.push(radii[radii.length - 1] + layerGap);
+}
+
+// Capas finas
+let fineRadii = [];
+for (let i = 0; i < 6; i++) {
+  fineRadii.push(radii[radii.length - 1] + (i + 1) * layerGap);
+}
+
+function fireColor(depth, alpha) {
+  const r = 255;
+  const g = Math.floor(120 + depth * 80);
+  const b = Math.floor(20 + depth * 20);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function drawCircle(radius, offset, size, intense=false) {
+  const count = Math.floor((2 * Math.PI * radius) / (spacing + size));
+
+  ctx.shadowColor = intense
+    ? "rgba(255,180,60,0.8)"
+    : "rgba(255,120,40,0.6)";
+  ctx.shadowBlur = intense ? 14 : 8;
+
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + offset;
+    const depth = (Math.sin(angle) + 1) / 2;
+
+    const x = cx + radius * Math.cos(angle) + 0.5;
+    const y = cy + radius * Math.sin(angle) * 0.8 + 0.5;
+
+    const alpha = intense
+      ? 0.75 + depth * 0.25
+      : 0.6 + depth * 0.25;
+
+    ctx.fillStyle = fireColor(depth, alpha);
+    ctx.beginPath();
+    ctx.arc(x, y, size + depth * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.shadowColor = "transparent";
+}
+
+function animate() {
+  // 🔥 RASTRO / CÁMARA LENTA
+  ctx.fillStyle = "rgba(0,0,0,0.12)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  radii.forEach(r => drawCircle(r, angleOffset, 1));
+  fineRadii.forEach(r => drawCircle(r, angleOffset, 0.5, true));
+
+  angleOffset += 0.002;
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
